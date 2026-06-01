@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ElectroFact App · Facturación electrónica inteligente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,400&family=Archivo:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --noir:#1c1c1c;
+    --charcoal:#2B2B2B;
+    --iron:#565656;
+    --fog:#848484;
+    --silver:#B3B3B3;
+    --veil:#E0E0E0;
+    --paper:#F4F4F2;
+    --line:rgba(179,179,179,.16);
+    --line-strong:rgba(179,179,179,.28);
+    --glass:rgba(43,43,43,.55);
+    --serif:"Fraunces",serif;
+    --sans:"Archivo",sans-serif;
+    --mono:"Space Mono",monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:var(--sans);
+    background:var(--noir);
+    color:var(--veil);
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--veil);color:var(--noir)}
+  /* grain overlay */
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:.04;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode:overlay;
+  }
+
+  /* ============ LANDING ============ */
+  #landing{position:relative;min-height:100vh;display:flex;flex-direction:column;isolation:isolate}
+  .mesh{position:absolute;inset:-20%;z-index:-2;filter:blur(60px);opacity:.9}
+  .mesh span{position:absolute;border-radius:50%;mix-blend-mode:screen;animation:drift 22s ease-in-out infinite}
+  .mesh .b1{width:50vw;height:50vw;left:-5%;top:-10%;background:radial-gradient(circle,#6e6e6e,transparent 65%)}
+  .mesh .b2{width:42vw;height:42vw;right:-8%;top:5%;background:radial-gradient(circle,#3a3a3a,transparent 60%);animation-delay:-7s}
+  .mesh .b3{width:46vw;height:46vw;left:25%;bottom:-25%;background:radial-gradient(circle,#8a8a8a,transparent 62%);animation-delay:-13s}
+  @keyframes drift{
+    0%,100%{transform:translate(0,0) scale(1)}
+    33%{transform:translate(6%,4%) scale(1.12)}
+    66%{transform:translate(-5%,7%) scale(.94)}
+  }
+  /* animated grid */
+  .grid-bg{position:absolute;inset:0;z-index:-1;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:64px 64px;
+    mask-image:radial-gradient(ellipse 80% 70% at 50% 40%,#000 30%,transparent 80%);
+    -webkit-mask-image:radial-gradient(ellipse 80% 70% at 50% 40%,#000 30%,transparent 80%);
+    animation:gridpan 30s linear infinite;
+  }
+  @keyframes gridpan{from{background-position:0 0}to{background-position:64px 64px}}
+
+  nav{display:flex;align-items:center;justify-content:space-between;padding:26px clamp(20px,5vw,64px);position:relative;z-index:5}
+  .brand{display:flex;align-items:center;gap:12px;font-weight:600;letter-spacing:.04em}
+  .brand .dot{width:30px;height:30px;border-radius:8px;background:linear-gradient(145deg,var(--veil),var(--fog));position:relative;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+  .brand .dot::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 3px,rgba(28,28,28,.5) 3px 4px)}
+  .brand .dot::after{content:"";position:absolute;left:6px;top:7px;width:13px;height:16px;background:var(--noir);clip-path:polygon(0 0,100% 0,100% 100%,70% 85%,55% 100%,40% 85%,25% 100%,0 100%)}
+  .brand b{font-size:1.05rem}
+  .brand span{color:var(--fog);font-weight:300}
+  .nav-links{display:flex;gap:30px;font-size:.86rem;color:var(--silver)}
+  .nav-links a{color:inherit;text-decoration:none;position:relative;opacity:.8;transition:opacity .3s}
+  .nav-links a:hover{opacity:1}
+  .nav-links a::after{content:"";position:absolute;left:0;bottom:-5px;height:1px;width:0;background:var(--veil);transition:width .35s}
+  .nav-links a:hover::after{width:100%}
+  @media(max-width:760px){.nav-links{display:none}}
+
+  .hero{flex:1;display:grid;grid-template-columns:1.1fr .9fr;align-items:center;gap:40px;padding:0 clamp(20px,5vw,64px) 40px;position:relative;z-index:2}
+  @media(max-width:920px){.hero{grid-template-columns:1fr;gap:10px;padding-bottom:60px}}
+
+  .eyebrow{display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--silver);border:1px solid var(--line-strong);padding:7px 14px;border-radius:100px;background:rgba(255,255,255,.02);opacity:0;animation:rise .8s .1s forwards}
+  .eyebrow .pulse{width:7px;height:7px;border-radius:50%;background:var(--veil);box-shadow:0 0 0 0 var(--veil);animation:pulse 2.4s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(224,224,224,.5)}70%{box-shadow:0 0 0 9px rgba(224,224,224,0)}100%{box-shadow:0 0 0 0 rgba(224,224,224,0)}}
+
+  h1.title{font-family:var(--serif);font-weight:300;font-size:clamp(2.7rem,6.5vw,5.4rem);line-height:.98;letter-spacing:-.02em;margin:26px 0 22px;color:var(--paper)}
+  h1.title .ln{display:block;overflow:hidden}
+  h1.title .ln i{display:block;font-style:normal;transform:translateY(110%);animation:lineup 1s cubic-bezier(.16,1,.3,1) forwards}
+  h1.title .ln:nth-child(1) i{animation-delay:.18s}
+  h1.title .ln:nth-child(2) i{animation-delay:.30s}
+  h1.title .ln:nth-child(3) i{animation-delay:.42s}
+  h1.title em{font-style:italic;color:var(--silver)}
+  @keyframes lineup{to{transform:translateY(0)}}
+
+  .lede{max-width:30rem;color:var(--silver);font-size:1.04rem;line-height:1.6;font-weight:300;opacity:0;animation:rise .9s .6s forwards}
+  .cta-row{display:flex;gap:16px;align-items:center;margin-top:34px;flex-wrap:wrap;opacity:0;animation:rise .9s .75s forwards}
+  .btn{font-family:var(--sans);font-size:.92rem;font-weight:500;border:none;cursor:pointer;padding:15px 26px;border-radius:12px;display:inline-flex;align-items:center;gap:10px;transition:transform .25s,box-shadow .3s}
+  .btn-primary{background:var(--paper);color:var(--noir);box-shadow:0 10px 30px rgba(0,0,0,.45)}
+  .btn-primary:hover{transform:translateY(-3px);box-shadow:0 18px 40px rgba(0,0,0,.55)}
+  .btn-ghost{background:transparent;color:var(--veil);border:1px solid var(--line-strong)}
+  .btn-ghost:hover{border-color:var(--silver);transform:translateY(-3px)}
+  .btn .arr{transition:transform .3s}
+  .btn:hover .arr{transform:translate(4px)}
+
+  .stats{display:flex;gap:34px;margin-top:48px;opacity:0;animation:rise 1s .9s forwards}
+  .stats .s b{font-family:var(--mono);font-size:1.7rem;color:var(--paper);display:block}
+  .stats .s span{font-size:.74rem;color:var(--fog);letter-spacing:.08em;text-transform:uppercase}
+
+  @keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+
+  /* floating invoice card */
+  .hero-visual{position:relative;height:min(70vh,560px);perspective:1400px}
+  .float{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;animation:floaty 7s ease-in-out infinite}
+  @keyframes floaty{0%,100%{transform:translateY(-10px)}50%{transform:translateY(10px)}}
+  .invoice{width:min(380px,82%);background:linear-gradient(160deg,#323232,#222);border:1px solid var(--line-strong);border-radius:20px;padding:26px;box-shadow:0 40px 90px rgba(0,0,0,.6);transform:rotateY(-16deg) rotateX(6deg);opacity:0;animation:cardin 1.1s .5s cubic-bezier(.16,1,.3,1) forwards}
+  @keyframes cardin{from{opacity:0;transform:rotateY(-32deg) rotateX(12deg) translateY(40px)}to{opacity:1;transform:rotateY(-16deg) rotateX(6deg)}}
+  .invoice .ih{display:flex;justify-content:space-between;align-items:start;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:14px}
+  .invoice .ih .t{font-family:var(--mono);font-size:.66rem;letter-spacing:.18em;color:var(--fog);text-transform:uppercase}
+  .invoice .ih h3{font-family:var(--serif);font-weight:400;font-size:1.3rem;color:var(--paper);margin-top:4px}
+  .badge-auth{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;color:#cfe9cf;border:1px solid rgba(160,210,160,.4);background:rgba(120,170,120,.12);padding:5px 9px;border-radius:7px;display:inline-flex;gap:6px;align-items:center}
+  .badge-auth::before{content:"";width:6px;height:6px;border-radius:50%;background:#9bd49b;box-shadow:0 0 8px #9bd49b}
+  .invoice .row{display:flex;justify-content:space-between;font-size:.82rem;padding:7px 0;color:var(--silver)}
+  .invoice .row b{color:var(--veil);font-weight:500}
+  .invoice .total{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline}
+  .invoice .total span{color:var(--fog);font-size:.78rem}
+  .invoice .total b{font-family:var(--mono);font-size:1.5rem;color:var(--paper)}
+  .invoice .key{margin-top:16px;font-family:var(--mono);font-size:.56rem;letter-spacing:.04em;color:var(--fog);word-break:break-all;line-height:1.5;border-top:1px dashed var(--line);padding-top:12px}
+  /* mini chips floating around */
+  .chip{position:absolute;background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--line-strong);border-radius:12px;padding:11px 14px;font-size:.74rem;color:var(--veil);box-shadow:0 14px 34px rgba(0,0,0,.4);display:flex;gap:9px;align-items:center;opacity:0}
+  .chip svg{width:16px;height:16px;stroke:var(--silver)}
+  .chip b{font-family:var(--mono);color:var(--paper)}
+  .chip.c1{top:6%;left:-2%;animation:chipin .7s 1.1s forwards,bob 5s 1.8s ease-in-out infinite}
+  .chip.c2{bottom:14%;right:-4%;animation:chipin .7s 1.35s forwards,bob 6s 2s ease-in-out infinite}
+  .chip.c3{bottom:0%;left:8%;animation:chipin .7s 1.55s forwards,bob 5.5s 2.2s ease-in-out infinite}
+  @keyframes chipin{from{opacity:0;transform:scale(.8) translateY(14px)}to{opacity:1;transform:scale(1) translateY(0)}}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+  @media(max-width:920px){.hero-visual{height:420px;margin-top:20px}.chip.c1{left:2%}.chip.c2{right:2%}}
+
+  .scrollhint{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:.64rem;letter-spacing:.2em;color:var(--fog);text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0;animation:rise 1s 1.4s forwards}
+  .scrollhint .bar{width:1px;height:34px;background:linear-gradient(var(--fog),transparent);animation:drop 1.8s infinite}
+  @keyframes drop{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+  /* feature strip */
+  .features{padding:clamp(60px,9vw,120px) clamp(20px,5vw,64px);position:relative;z-index:2;border-top:1px solid var(--line)}
+  .features h2{font-family:var(--serif);font-weight:300;font-size:clamp(1.8rem,4vw,3rem);max-width:18ch;line-height:1.05;letter-spacing:-.01em;color:var(--paper)}
+  .features .sub{color:var(--fog);margin-top:14px;max-width:46ch;line-height:1.6;font-weight:300}
+  .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:54px}
+  @media(max-width:860px){.fgrid{grid-template-columns:1fr}}
+  .fcard{border:1px solid var(--line);border-radius:16px;padding:26px;background:linear-gradient(170deg,rgba(255,255,255,.025),transparent);transition:transform .4s,border-color .4s,background .4s}
+  .fcard:hover{transform:translateY(-6px);border-color:var(--line-strong);background:linear-gradient(170deg,rgba(255,255,255,.05),transparent)}
+  .fcard .ic{width:44px;height:44px;border-radius:11px;border:1px solid var(--line-strong);display:grid;place-items:center;margin-bottom:18px}
+  .fcard .ic svg{width:20px;height:20px;stroke:var(--silver)}
+  .fcard h3{font-size:1.06rem;color:var(--paper);font-weight:600;margin-bottom:8px}
+  .fcard p{color:var(--fog);font-size:.9rem;line-height:1.55;font-weight:300}
+  .reveal{opacity:0;transform:translateY(30px);transition:opacity .8s,transform .8s}
+  .reveal.in{opacity:1;transform:none}
+
+  /* ============ ABOUT / METODOLOGÍA ============ */
+  .about{position:relative;z-index:2;padding:clamp(60px,9vw,130px) clamp(20px,5vw,64px);border-top:1px solid var(--line);overflow:hidden}
+  .about::before{content:"";position:absolute;top:-10%;right:-10%;width:55vw;height:55vw;background:radial-gradient(circle,rgba(110,110,110,.16),transparent 65%);filter:blur(40px);z-index:-1;animation:drift 26s ease-in-out infinite}
+  .about-head{max-width:60rem}
+  .about-title{font-family:var(--serif);font-weight:300;font-size:clamp(2rem,5vw,3.6rem);line-height:1.04;letter-spacing:-.02em;color:var(--paper);margin:22px 0 20px}
+  .about-title em{font-style:italic;color:var(--silver)}
+  .about-lede{color:var(--silver);font-size:1.06rem;line-height:1.65;font-weight:300;max-width:46rem}
+  .about-lede b{color:var(--veil);font-weight:600}
+
+  .about-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin:60px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:36px 0}
+  @media(max-width:760px){.about-metrics{grid-template-columns:1fr 1fr;gap:30px}}
+  .am{text-align:center}
+  .am-num{font-family:var(--mono);font-size:clamp(2rem,5vw,3rem);color:var(--paper);display:block;line-height:1}
+  .am span{font-size:.78rem;color:var(--fog);letter-spacing:.08em;text-transform:uppercase;margin-top:8px;display:block}
+
+  .method{display:grid;grid-template-columns:.8fr 1.6fr;gap:40px;margin-bottom:80px}
+  @media(max-width:860px){.method{grid-template-columns:1fr;gap:28px}}
+  .method-intro h3{font-family:var(--serif);font-weight:300;font-size:2rem;color:var(--paper);margin-bottom:14px}
+  .method-intro p{color:var(--fog);line-height:1.6;font-weight:300}
+  .method-line{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:560px){.method-line{grid-template-columns:1fr}}
+  .mstep{border:1px solid var(--line);border-radius:16px;padding:24px;background:linear-gradient(170deg,rgba(255,255,255,.025),transparent);transition:transform .4s,border-color .4s}
+  .mstep:hover{transform:translateY(-6px);border-color:var(--line-strong)}
+  .mdot{font-family:var(--mono);font-size:.8rem;color:var(--noir);background:var(--silver);width:38px;height:38px;border-radius:10px;display:grid;place-items:center;margin-bottom:16px;font-weight:700}
+  .mstep h4{font-size:1.02rem;color:var(--paper);margin-bottom:8px;font-weight:600}
+  .mstep p{color:var(--fog);font-size:.88rem;line-height:1.5;font-weight:300}
+
+  /* values marquee */
+  .values-strip{overflow:hidden;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:22px 0;margin-bottom:80px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+  .values-track{display:flex;white-space:nowrap;width:max-content;animation:marquee 26s linear infinite}
+  .values-track span{font-family:var(--serif);font-style:italic;font-size:clamp(1.4rem,3.5vw,2.4rem);color:var(--iron);padding:0 14px}
+  @keyframes marquee{to{transform:translateX(-50%)}}
+
+  /* benchmarking */
+  .bench{display:grid;grid-template-columns:.85fr 1.5fr;gap:40px;align-items:center;margin-bottom:80px}
+  @media(max-width:860px){.bench{grid-template-columns:1fr;gap:26px}}
+  .bench-copy h3{font-family:var(--serif);font-weight:300;font-size:2rem;color:var(--paper);margin-bottom:14px}
+  .bench-copy p{color:var(--fog);line-height:1.6;font-weight:300}
+  .bench-copy b{color:var(--veil)}
+  .bench-table{border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .bt-row{display:grid;grid-template-columns:1fr 1fr 1.1fr;gap:0;border-bottom:1px solid var(--line);font-size:.9rem}
+  .bt-row:last-child{border-bottom:none}
+  .bt-row span{padding:15px 18px;color:var(--silver)}
+  .bt-row span:first-child{color:var(--fog)}
+  .bt-row .us{background:rgba(255,255,255,.04);color:var(--paper);font-weight:500;border-left:1px solid var(--line)}
+  .bt-head{background:#202020}
+  .bt-head span{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);font-weight:600}
+  .bt-head .us{color:var(--veil)}
+  @media(max-width:520px){.bt-row{grid-template-columns:1fr 1fr 1.1fr;font-size:.74rem}.bt-row span{padding:11px 8px}}
+
+  /* team */
+  .team{margin-bottom:70px}
+  .team h3{font-family:var(--serif);font-weight:300;font-size:2.2rem;color:var(--paper);text-align:center}
+  .team-sub{text-align:center;color:var(--fog);font-size:.86rem;margin:8px 0 40px;font-weight:300}
+  .team-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  @media(max-width:760px){.team-grid{grid-template-columns:repeat(2,1fr)}}
+  .member{border:1px solid var(--line);border-radius:14px;padding:24px 18px;text-align:center;background:linear-gradient(170deg,rgba(255,255,255,.02),transparent);transition:transform .4s,border-color .4s}
+  .member:hover{transform:translateY(-6px);border-color:var(--line-strong)}
+  .mav{width:54px;height:54px;border-radius:50%;margin:0 auto 14px;display:grid;place-items:center;font-family:var(--mono);font-size:1rem;color:var(--noir);background:linear-gradient(145deg,var(--veil),var(--fog));font-weight:700;box-shadow:0 8px 20px rgba(0,0,0,.4)}
+  .member b{display:block;color:var(--paper);font-size:.94rem;font-weight:600}
+  .member span{color:var(--fog);font-size:.78rem;margin-top:3px;display:block}
+
+  .about-cta{text-align:center;border:1px solid var(--line);border-radius:20px;padding:50px 24px;background:linear-gradient(170deg,rgba(255,255,255,.03),transparent)}
+  .about-cta h3{font-family:var(--serif);font-weight:300;font-size:clamp(1.6rem,4vw,2.4rem);color:var(--paper);margin-bottom:22px}
+
+  /* ============ NOTIFICATIONS ============ */
+  .bell{position:relative;cursor:pointer;width:40px;height:40px;border:1px solid var(--line-strong);border-radius:11px;display:grid;place-items:center;transition:border-color .25s}
+  .bell:hover{border-color:var(--silver)}
+  .bell svg{width:19px;height:19px;stroke:var(--silver)}
+  .badge-n{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;border-radius:9px;background:var(--paper);color:var(--noir);font-size:.66rem;font-weight:700;display:grid;place-items:center;padding:0 5px;font-family:var(--mono)}
+  .badge-n.zero{display:none}
+  .notif-pop{position:absolute;top:50px;right:0;width:320px;background:#242424;border:1px solid var(--line-strong);border-radius:14px;box-shadow:0 30px 70px rgba(0,0,0,.6);padding:8px;display:none;z-index:80;text-align:left}
+  .notif-pop.show{display:block;animation:pagein .3s}
+  .notif-pop .nh{font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--fog);padding:10px 12px 6px}
+  .notif-item{display:flex;gap:11px;padding:11px 12px;border-radius:10px;transition:background .2s}
+  .notif-item:hover{background:rgba(255,255,255,.04)}
+  .notif-item .ni-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex:none}
+  .notif-item .ni-dot.ven{background:#e0a0a0}
+  .notif-item .ni-dot.soon{background:var(--silver)}
+  .notif-item b{color:var(--veil);font-size:.86rem;font-weight:500}
+  .notif-item small{color:var(--fog);font-size:.76rem;display:block;margin-top:2px}
+  @media(max-width:840px){.notif-pop{right:-60px;width:280px}}
+
+  /* ============ REPORTES / BSC ============ */
+  .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+  @media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:620px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+  .kc{border:1px solid var(--line);border-radius:12px;padding:16px;background:#181818;transition:transform .3s,border-color .3s}
+  .kc:hover{transform:translateY(-4px);border-color:var(--line-strong)}
+  .kc .kv{font-family:var(--mono);font-size:1.25rem;color:var(--paper);line-height:1.1}
+  .kc .kl{font-size:.72rem;color:var(--fog);margin-top:8px;line-height:1.3}
+
+  .bsc{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  @media(max-width:980px){.bsc{grid-template-columns:1fr 1fr}}
+  @media(max-width:520px){.bsc{grid-template-columns:1fr}}
+  .bsc-card{border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:14px;padding:20px;background:#181818}
+  .bsc-h{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .bsc-h svg{width:20px;height:20px;stroke:var(--accent)}
+  .bsc-h span{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--silver);font-weight:600}
+  .bsc-goal{color:var(--paper);font-size:.96rem;line-height:1.4;margin-bottom:14px;font-weight:500}
+  .bsc-meta b{font-family:var(--mono);color:var(--accent);font-size:.92rem;display:block;filter:brightness(1.4)}
+  .bsc-meta small{color:var(--fog);font-size:.78rem;display:block;margin-top:6px;line-height:1.4}
+
+  .risk{padding:14px 0;border-bottom:1px solid var(--line)}
+  .risk:last-child{border-bottom:none}
+  .risk-h{display:flex;align-items:center;gap:10px;color:var(--veil);font-weight:600;font-size:.92rem;margin-bottom:5px}
+  .dotr{width:8px;height:8px;border-radius:50%;background:#e0a0a0;flex:none}
+  .risk p{color:var(--fog);font-size:.84rem;line-height:1.45;font-weight:300;padding-left:18px}
+
+  /* cursor spotlight on landing */
+  #spotlight{position:fixed;width:480px;height:480px;border-radius:50%;background:radial-gradient(circle,rgba(200,200,200,.07),transparent 60%);pointer-events:none;z-index:0;transform:translate(-50%,-50%);transition:opacity .4s;opacity:0}
+  /* particles canvas */
+  #particles{position:absolute;inset:0;z-index:-1;pointer-events:none}
+
+  /* empresa page */
+  .emp-hero{display:flex;flex-direction:column;gap:30px}
+  .emp-hero .about-metrics{border-top:1px solid var(--line)!important;padding-top:26px!important}
+  #page-empresa .method-line{margin-top:18px}
+
+  /* ============ DASHBOARD ============ */
+  #app{display:none;min-height:100vh;background:var(--noir)}
+  #app.show{display:grid;grid-template-columns:248px 1fr;animation:fadein .6s}
+  @keyframes fadein{from{opacity:0}to{opacity:1}}
+  @media(max-width:840px){#app.show{grid-template-columns:1fr}.side{position:fixed;z-index:50;transform:translateX(-100%);transition:transform .35s}.side.open{transform:none}}
+
+  .side{background:#202020;border-right:1px solid var(--line);padding:24px 16px;display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
+  .side .brand{padding:6px 8px 22px;border-bottom:1px solid var(--line);margin-bottom:16px}
+  .navbtn{display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:none;border:none;color:var(--silver);font-family:var(--sans);font-size:.9rem;padding:12px 13px;border-radius:10px;cursor:pointer;transition:background .25s,color .25s;margin-bottom:3px}
+  .navbtn svg{width:18px;height:18px;stroke:currentColor;flex:none}
+  .navbtn:hover{background:rgba(255,255,255,.04);color:var(--veil)}
+  .navbtn.active{background:var(--paper);color:var(--noir);font-weight:500}
+  .side .foot{margin-top:auto;font-size:.72rem;color:var(--fog);padding:14px 10px;border-top:1px solid var(--line)}
+  .side .foot button{margin-top:10px;font-size:.78rem;color:var(--silver);background:none;border:1px solid var(--line-strong);padding:8px 12px;border-radius:9px;cursor:pointer;width:100%;font-family:var(--sans)}
+  .side .foot button:hover{border-color:var(--silver);color:var(--veil)}
+
+  main{padding:clamp(20px,3vw,40px);overflow:auto;height:100vh}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;flex-wrap:wrap;gap:14px}
+  .topbar .h{font-family:var(--serif);font-weight:300;font-size:clamp(1.7rem,3vw,2.4rem);color:var(--paper);letter-spacing:-.01em}
+  .topbar .h small{display:block;font-family:var(--sans);font-size:.82rem;color:var(--fog);margin-top:4px;letter-spacing:0}
+  .topbar .right{display:flex;align-items:center;gap:14px;font-size:.84rem;color:var(--silver)}
+  .pill{font-family:var(--mono);font-size:.68rem;letter-spacing:.08em;border:1px solid var(--line-strong);padding:7px 12px;border-radius:100px;color:var(--silver);display:flex;gap:8px;align-items:center}
+  .pill .live{width:7px;height:7px;border-radius:50%;background:#9bd49b;box-shadow:0 0 8px #9bd49b;animation:pulse 2s infinite}
+  .menu-toggle{display:none;background:none;border:1px solid var(--line-strong);color:var(--veil);border-radius:9px;padding:8px;cursor:pointer}
+  .menu-toggle svg{width:20px;height:20px;stroke:currentColor}
+  @media(max-width:840px){.menu-toggle{display:inline-flex}}
+
+  .page{display:none}
+  .page.active{display:block;animation:pagein .45s ease}
+  @keyframes pagein{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+  @media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:520px){.kpis{grid-template-columns:1fr}}
+  .kpi{border:1px solid var(--line);border-radius:14px;padding:20px;background:linear-gradient(165deg,rgba(255,255,255,.03),transparent);position:relative;overflow:hidden}
+  .kpi .lab{font-size:.76rem;color:var(--fog);letter-spacing:.04em;text-transform:uppercase;margin-bottom:10px}
+  .kpi .val{font-family:var(--mono);font-size:1.9rem;color:var(--paper);line-height:1}
+  .kpi .delta{font-size:.76rem;margin-top:9px;color:var(--silver)}
+  .kpi .delta.up{color:#9bd49b}
+  .kpi .spark{position:absolute;right:14px;top:16px;width:54px;height:24px;opacity:.5}
+
+  .panel{border:1px solid var(--line);border-radius:16px;padding:24px;background:#1f1f1f;margin-bottom:22px}
+  .panel h3{font-size:1.05rem;color:var(--paper);margin-bottom:4px;font-weight:600}
+  .panel .desc{color:var(--fog);font-size:.86rem;margin-bottom:18px;font-weight:300}
+  .two{display:grid;grid-template-columns:1.4fr 1fr;gap:22px}
+  @media(max-width:960px){.two{grid-template-columns:1fr}}
+
+  table{width:100%;border-collapse:collapse;font-size:.88rem}
+  th{text-align:left;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);font-weight:500;padding:0 12px 12px;border-bottom:1px solid var(--line)}
+  td{padding:14px 12px;border-bottom:1px solid var(--line);color:var(--silver)}
+  tr:last-child td{border-bottom:none}
+  tr{transition:background .2s}
+  tbody tr:hover{background:rgba(255,255,255,.025)}
+  td b{color:var(--veil);font-weight:500}
+  .mono{font-family:var(--mono)}
+  .tag{font-family:var(--mono);font-size:.66rem;padding:5px 10px;border-radius:7px;letter-spacing:.04em;display:inline-flex;align-items:center;gap:6px}
+  .tag.ok{color:#bfe6bf;background:rgba(120,170,120,.14);border:1px solid rgba(150,200,150,.3)}
+  .tag.pend{color:var(--silver);background:rgba(179,179,179,.1);border:1px solid var(--line-strong)}
+  .tag.ven{color:#e8c5c5;background:rgba(190,120,120,.14);border:1px solid rgba(210,150,150,.3)}
+
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:.74rem;color:var(--fog);letter-spacing:.05em;text-transform:uppercase;margin-bottom:7px}
+  .field input,.field select{width:100%;background:#181818;border:1px solid var(--line-strong);color:var(--veil);padding:12px 14px;border-radius:10px;font-family:var(--sans);font-size:.92rem;transition:border-color .25s}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--silver)}
+  .inline2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+  /* invoice builder */
+  .lineitem{display:grid;grid-template-columns:1fr 80px 110px 36px;gap:10px;margin-bottom:10px;align-items:center}
+  .lineitem input{padding:10px 12px}
+  .del{background:none;border:1px solid var(--line-strong);color:var(--fog);border-radius:8px;height:38px;cursor:pointer;font-size:1.1rem;line-height:1}
+  .del:hover{color:#e8c5c5;border-color:rgba(210,150,150,.4)}
+  .addline{background:none;border:1px dashed var(--line-strong);color:var(--silver);padding:10px;border-radius:10px;width:100%;cursor:pointer;font-family:var(--sans);font-size:.84rem;margin-top:4px}
+  .addline:hover{border-color:var(--silver)}
+  .totbox{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+  .totbox .r{display:flex;justify-content:space-between;padding:6px 0;color:var(--silver);font-size:.9rem}
+  .totbox .r.grand{font-size:1.2rem;color:var(--paper);margin-top:8px;padding-top:12px;border-top:1px solid var(--line)}
+  .totbox .r.grand b{font-family:var(--mono)}
+
+  /* SRI modal */
+  .overlay{position:fixed;inset:0;background:rgba(15,15,15,.82);backdrop-filter:blur(8px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+  .overlay.show{display:flex;animation:fadein .3s}
+  .modal{width:min(460px,100%);background:#242424;border:1px solid var(--line-strong);border-radius:20px;padding:34px;box-shadow:0 40px 100px rgba(0,0,0,.6)}
+  .modal h3{font-family:var(--serif);font-weight:300;font-size:1.7rem;color:var(--paper);margin-bottom:4px}
+  .modal .ms{color:var(--fog);font-size:.86rem;margin-bottom:26px}
+  .steps{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+  .step{display:flex;align-items:center;gap:14px;padding:13px 10px;border-radius:10px;opacity:.4;transition:opacity .4s,background .4s}
+  .step.active{opacity:1;background:rgba(255,255,255,.04)}
+  .step.done{opacity:1}
+  .step .ring{width:26px;height:26px;border-radius:50%;border:2px solid var(--line-strong);flex:none;position:relative;display:grid;place-items:center}
+  .step.active .ring{border-color:var(--silver)}
+  .step.active .ring::after{content:"";position:absolute;inset:-2px;border-radius:50%;border:2px solid transparent;border-top-color:var(--veil);animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .step.done .ring{border-color:#9bd49b;background:rgba(120,170,120,.18)}
+  .step.done .ring::before{content:"";width:7px;height:12px;border:solid #9bd49b;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+  .step .tx{font-size:.92rem;color:var(--veil)}
+  .step .tx small{display:block;font-family:var(--mono);font-size:.66rem;color:var(--fog);margin-top:2px}
+  .authdone{text-align:center;display:none}
+  .authdone.show{display:block;animation:pagein .5s}
+  .authdone .check{width:74px;height:74px;border-radius:50%;background:rgba(120,170,120,.16);border:2px solid #9bd49b;margin:0 auto 18px;display:grid;place-items:center}
+  .authdone .check svg{width:34px;height:34px;stroke:#9bd49b;stroke-width:2.4;fill:none;stroke-dasharray:40;stroke-dashoffset:40;animation:draw .6s .2s forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  .authdone h3{color:#cfe9cf}
+  .authbox{text-align:left;background:#181818;border:1px solid var(--line);border-radius:12px;padding:16px;margin:18px 0;font-size:.84rem}
+  .authbox .r{display:flex;justify-content:space-between;padding:5px 0;color:var(--silver)}
+  .authbox .r b{color:var(--veil)}
+  .authbox .key{font-family:var(--mono);font-size:.6rem;color:var(--fog);word-break:break-all;line-height:1.6;border-top:1px dashed var(--line);margin-top:10px;padding-top:10px}
+
+  .chart-wrap{position:relative}
+  canvas{width:100%;display:block}
+  .legend{display:flex;gap:18px;margin-top:14px;font-size:.78rem;color:var(--fog);flex-wrap:wrap}
+  .legend span{display:flex;align-items:center;gap:7px}
+  .legend i{width:14px;height:3px;border-radius:2px;display:inline-block}
+
+  .ai-note{display:flex;gap:14px;align-items:flex-start;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:18px}
+  .ai-note .ai-ic{width:34px;height:34px;border-radius:9px;border:1px solid var(--line-strong);display:grid;place-items:center;flex:none}
+  .ai-note .ai-ic svg{width:17px;height:17px;stroke:var(--silver)}
+  .ai-note p{font-size:.86rem;color:var(--silver);line-height:1.55;font-weight:300}
+  .ai-note p b{color:var(--veil);font-weight:600}
+
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(120%);background:var(--paper);color:var(--noir);padding:14px 22px;border-radius:12px;font-size:.88rem;font-weight:500;z-index:300;box-shadow:0 20px 50px rgba(0,0,0,.5);transition:transform .4s cubic-bezier(.16,1,.3,1);display:flex;gap:10px;align-items:center}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+
+  .empty{color:var(--fog);font-size:.88rem;padding:24px;text-align:center;font-weight:300}
+
+  /* scenario tabs */
+  .scenario-tabs{display:flex;gap:4px;background:#181818;border:1px solid var(--line-strong);border-radius:11px;padding:4px}
+  .sc-tab{font-family:var(--sans);font-size:.82rem;color:var(--silver);background:none;border:none;padding:9px 16px;border-radius:8px;cursor:pointer;transition:background .25s,color .25s;white-space:nowrap}
+  .sc-tab:hover{color:var(--veil)}
+  .sc-tab.active{background:var(--paper);color:var(--noir);font-weight:500}
+
+  /* web services list */
+  .ws-list{display:flex;flex-direction:column;gap:10px}
+  .ws{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:11px;background:#181818}
+  .ws b{color:var(--veil);font-size:.92rem;font-weight:500;display:block}
+  .ws small{color:var(--fog);font-size:.76rem;display:block;margin-top:3px}
+
+  /* compliance bars */
+  .comp{margin-bottom:16px}
+  .comp-bar{height:8px;border-radius:5px;background:#181818;overflow:hidden;border:1px solid var(--line)}
+  .comp-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--fog),var(--veil));border-radius:5px;width:0;transition:width 1.1s cubic-bezier(.16,1,.3,1)}
+  .comp-row{display:flex;justify-content:space-between;margin-top:8px;font-size:.86rem;color:var(--silver)}
+  .comp-row b{color:var(--veil);font-family:var(--mono)}
+
+  /* horizontal scroll wrapper for tables on mobile */
+  .panel table{min-width:520px}
+  .panel{overflow-x:auto}
+
+  /* ======= MOBILE ADAPTATION ======= */
+  @media(max-width:840px){
+    main{height:auto;min-height:100vh}
+    .topbar{position:sticky;top:0;background:var(--noir);z-index:40;padding:10px 0 14px;margin-bottom:18px;border-bottom:1px solid var(--line)}
+    .side{width:84vw;max-width:300px;box-shadow:30px 0 80px rgba(0,0,0,.6)}
+    .side::after{content:"";position:fixed;inset:0;left:84vw;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .3s}
+  }
+  @media(max-width:620px){
+    .kpis,.kpis[style]{grid-template-columns:1fr 1fr!important}
+    .topbar .right{display:none}
+    .panel{padding:18px}
+    .scenario-tabs{width:100%;margin-top:6px}
+    .sc-tab{flex:1;padding:9px 6px;text-align:center}
+    .ws{flex-direction:row;align-items:center}
+    .lineitem{grid-template-columns:1fr 56px 84px 34px;gap:7px}
+    .lineitem input{padding:9px 8px;font-size:.82rem}
+    .modal{padding:24px 20px}
+    .modal h3{font-size:1.4rem}
+    .step .tx{font-size:.85rem}
+    .hero .stats{gap:22px}
+    .hero .stats .s b{font-size:1.4rem}
+    h1.title{font-size:clamp(2.3rem,11vw,3.2rem)}
+  }
+  @media(max-width:430px){
+    .kpis,.kpis[style]{grid-template-columns:1fr!important}
+    main{padding:16px 14px 40px}
+    .nav-links{display:none}
+    .cta-row .btn{flex:1;justify-content:center}
+  }
+</style>
+</head>
+<body>
+<div id="spotlight"></div>
+
+<!-- ===================== LANDING ===================== -->
+<section id="landing">
+  <div class="mesh"><span class="b1"></span><span class="b2"></span><span class="b3"></span></div>
+  <canvas id="particles"></canvas>
+  <div class="grid-bg"></div>
+
+  <nav>
+    <div class="brand"><span class="dot"></span><b>ElectroFact</b><span>App</span></div>
+    <div class="nav-links">
+      <a href="#features">Plataforma</a>
+      <a href="javascript:void(0)" onclick="goEmpresa()">Nosotros</a>
+      <a href="javascript:void(0)" onclick="goEmpresa()">Metodología</a>
+      <a href="javascript:void(0)" onclick="goEmpresa()">Equipo</a>
+    </div>
+    <button class="btn btn-ghost" style="padding:11px 20px" onclick="enterApp()">Ingresar <span class="arr">→</span></button>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-copy">
+      <span class="eyebrow"><span class="pulse"></span>Facturación electrónica · Ecuador · SRI</span>
+      <h1 class="title">
+        <span class="ln"><i>Tu contabilidad,</i></span>
+        <span class="ln"><i><em>automatizada</em></i></span>
+        <span class="ln"><i>de punta a punta.</i></span>
+      </h1>
+      <p class="lede">Emite comprobantes autorizados por el SRI, calcula tus impuestos con un motor inteligente y proyecta tu flujo de caja. Diseñado para freelancers y autónomos del sector digital.</p>
+      <div class="cta-row">
+        <button class="btn btn-primary" onclick="enterApp()">Probar el panel demo <span class="arr">→</span></button>
+        <button class="btn btn-ghost" onclick="document.getElementById('features').scrollIntoView()">Ver capacidades</button>
+      </div>
+      <div class="stats">
+        <div class="s"><b data-count="99.5" data-suffix="%">0%</b><span>Precisión fiscal</span></div>
+        <div class="s"><b data-count="5" data-prefix="&lt;" data-suffix="s">0s</b><span>Emisión por factura</span></div>
+        <div class="s"><b data-count="70" data-suffix="%">0%</b><span>Menos tiempo admin.</span></div>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="float">
+        <div class="invoice">
+          <div class="ih">
+            <div><span class="t">Factura electrónica</span><h3>001-001-000000147</h3></div>
+            <span class="badge-auth">AUTORIZADO</span>
+          </div>
+          <div class="row"><span>Cliente</span><b>Estudio Nómada S.A.</b></div>
+          <div class="row"><span>Servicio</span><b>Diseño UX · Octubre</b></div>
+          <div class="row"><span>Subtotal</span><b>$1.250,00</b></div>
+          <div class="row"><span>IVA 15%</span><b>$187,50</b></div>
+          <div class="total"><span>Total a pagar</span><b>$1.437,50</b></div>
+          <div class="key">Clave de acceso<br>0110202601179000000147001001000000147&nbsp;1234567813</div>
+        </div>
+      </div>
+      <div class="chip c1">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M12 2v20M2 12h20"/></svg>
+        Motor fiscal · <b>IVA + RFE</b>
+      </div>
+      <div class="chip c2">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M3 17l5-5 4 4 8-8"/></svg>
+        Flujo proyectado · <b>+18%</b>
+      </div>
+      <div class="chip c3">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>
+        SRI · <b>en línea</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="scrollhint">Desliza<div class="bar"></div></div>
+</section>
+
+<!-- feature strip -->
+<section class="features" id="features">
+  <h2 class="reveal">Todo lo que un autónomo necesita, en un solo lugar.</h2>
+  <p class="sub reveal">Construido sobre un modelo administrativo contemporáneo: ágil, escalable y orientado al cliente. Cada módulo está pensado para reducir la fricción fiscal.</p>
+  <div class="fgrid">
+    <div class="fcard reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M17 11l2 2 4-4"/></svg></div><h3>Registro de clientes</h3><p>Base digital de clientes con identificación, correo y datos tributarios listos para facturar en segundos.</p></div>
+    <div class="fcard reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div><h3>Facturación electrónica</h3><p>Genera comprobantes con clave de acceso y autorización del SRI simulada paso a paso, igual que en producción.</p></div>
+    <div class="fcard reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 3v18M7 7h7a3 3 0 010 6H7m0 0h8"/></svg></div><h3>Motor fiscal con IA</h3><p>Cálculo automático de IVA y retenciones, clasificación de gastos deducibles y validación normativa continua.</p></div>
+    <div class="fcard reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div><h3>Control de pagos</h3><p>Estado de cada factura: pagada, pendiente o vencida, con notificaciones de vencimiento automáticas.</p></div>
+    <div class="fcard reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M3 3v18h18M7 14l3-4 3 3 5-7"/></svg></div><h3>Predicción de flujo</h3><p>Proyección inteligente de tu flujo de caja a 6 meses para anticipar ingresos y planificar tus obligaciones.</p></div>
+    <div class="fcard reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M4 19V9l8-6 8 6v10M9 19v-6h6v6"/></svg></div><h3>Reportes y KPIs</h3><p>Indicadores en tiempo real: ingresos recurrentes, retención, precisión fiscal y disponibilidad del sistema.</p></div>
+  </div>
+</section>
+
+<!-- ===================== DASHBOARD ===================== -->
+<div id="app">
+  <aside class="side" id="side">
+    <div class="brand"><span class="dot"></span><b>ElectroFact</b><span>App</span></div>
+    <button class="navbtn active" data-page="resumen"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Resumen</button>
+    <button class="navbtn" data-page="clientes"><svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M17 8a3 3 0 010 6"/></svg>Clientes</button>
+    <button class="navbtn" data-page="facturar"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Facturación</button>
+    <button class="navbtn" data-page="pagos"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Control de pagos</button>
+    <button class="navbtn" data-page="prediccion"><svg viewBox="0 0 24 24" fill="none"><path d="M3 3v18h18M7 14l3-4 3 3 5-7"/></svg>Predicción IA</button>
+    <button class="navbtn" data-page="reportes"><svg viewBox="0 0 24 24" fill="none"><path d="M9 17V9M12 17v-5M15 17v-3M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>Reportes & BSC</button>
+    <button class="navbtn" data-page="sri"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg>Integración SRI</button>
+    <button class="navbtn" data-page="empresa"><svg viewBox="0 0 24 24" fill="none"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/></svg>La empresa</button>
+    <div class="foot">
+      ElectroFact App · Demo v1.0<br>UNEMI · Grupo 2 · 2026
+      <button onclick="exitApp()">← Volver al inicio</button>
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:14px">
+        <button class="menu-toggle" onclick="document.getElementById('side').classList.toggle('open')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+        <div class="h" id="pageTitle">Resumen ejecutivo<small id="pageSub">Estado general de tu operación · Octubre 2026</small></div>
+      </div>
+      <div class="right">
+        <div class="bell" id="bell" onclick="toggleNotif()">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
+          <span class="badge-n" id="notifCount">0</span>
+          <div class="notif-pop" id="notifPop"></div>
+        </div>
+        <span class="pill"><span class="live"></span>SRI · En línea</span>
+        <span class="pill">Plan Premium</span>
+      </div>
+    </div>
+
+    <!-- RESUMEN -->
+    <section class="page active" id="page-resumen">
+      <div class="kpis">
+        <div class="kpi"><div class="lab">Clientes activos</div><div class="val" data-kcount="147">0</div><div class="delta up">▲ 12 este mes</div></div>
+        <div class="kpi"><div class="lab">Ingresos recurrentes</div><div class="val" data-kcount="1575" data-prefix="$">$0</div><div class="delta up">▲ 18% vs mes 8</div></div>
+        <div class="kpi"><div class="lab">Precisión fiscal</div><div class="val" data-kcount="99.5" data-suffix="%">0%</div><div class="delta">Validado con SRI</div></div>
+        <div class="kpi"><div class="lab">Disponibilidad</div><div class="val" data-kcount="99.5" data-suffix="%">0%</div><div class="delta">Uptime mensual</div></div>
+      </div>
+      <div class="two">
+        <div class="panel">
+          <h3>Ingresos facturados</h3>
+          <p class="desc">Comprobantes autorizados por mes · acumulado del año en curso</p>
+          <div class="chart-wrap"><canvas id="barChart" height="300"></canvas></div>
+          <div class="legend"><span><i style="background:var(--veil)"></i>Facturado</span><span><i style="background:var(--iron)"></i>Cobrado</span></div>
+        </div>
+        <div class="panel">
+          <h3>Estado de cartera</h3>
+          <p class="desc">Distribución de tus facturas emitidas</p>
+          <div class="chart-wrap"><canvas id="donutChart" height="300"></canvas></div>
+          <div class="legend"><span><i style="background:var(--veil)"></i>Pagadas</span><span><i style="background:var(--fog)"></i>Pendientes</span><span><i style="background:var(--iron)"></i>Vencidas</span></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Últimos comprobantes</h3>
+        <p class="desc">Emisiones recientes con su estado de autorización ante el SRI</p>
+        <table><thead><tr><th>Comprobante</th><th>Cliente</th><th>Fecha</th><th>Total</th><th>Estado SRI</th></tr></thead><tbody id="recentBody"></tbody></table>
+      </div>
+    </section>
+
+    <!-- CLIENTES -->
+    <section class="page" id="page-clientes">
+      <div class="two">
+        <div class="panel">
+          <h3>Cartera de clientes</h3>
+          <p class="desc">Clientes registrados disponibles para facturación inmediata</p>
+          <table><thead><tr><th>Cliente</th><th>Identificación</th><th>Correo</th><th>Facturado</th></tr></thead><tbody id="clientBody"></tbody></table>
+        </div>
+        <div class="panel">
+          <h3>Registrar cliente</h3>
+          <p class="desc">Alta digital en segundos</p>
+          <div class="field"><label>Nombre / Razón social</label><input id="cName" placeholder="Ej. Estudio Nómada S.A."></div>
+          <div class="field"><label>Identificación (RUC / Cédula)</label><input id="cId" placeholder="0102030405001"></div>
+          <div class="field"><label>Correo electrónico</label><input id="cMail" placeholder="contacto@empresa.com"></div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="addClient()">Registrar cliente</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- FACTURAR -->
+    <section class="page" id="page-facturar">
+      <div class="two">
+        <div class="panel">
+          <h3>Nuevo comprobante</h3>
+          <p class="desc">Completa los datos y autoriza electrónicamente ante el SRI</p>
+          <div class="field"><label>Cliente</label><select id="fClient"></select></div>
+          <label style="display:block;font-size:.74rem;color:var(--fog);letter-spacing:.05em;text-transform:uppercase;margin-bottom:9px">Detalle</label>
+          <div id="lineItems"></div>
+          <button class="addline" onclick="addLine()">+ Agregar línea</button>
+          <div class="totbox">
+            <div class="r"><span>Subtotal</span><span class="mono" id="tSub">$0,00</span></div>
+            <div class="r"><span>IVA <span id="ivaRate">15</span>%</span><span class="mono" id="tIva">$0,00</span></div>
+            <div class="r"><span>Retención fuente (1%)</span><span class="mono" id="tRet">$0,00</span></div>
+            <div class="r grand"><span>Total</span><b id="tTot">$0,00</b></div>
+          </div>
+          <div class="ai-note">
+            <div class="ai-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M6 18l2-2M16 8l2-2"/><circle cx="12" cy="12" r="3"/></svg></div>
+            <p><b>Motor fiscal:</b> el IVA y la retención se calculan automáticamente según la normativa vigente del SRI. El gasto fue clasificado como <b>deducible</b>.</p>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:18px" onclick="emit()">Autorizar y emitir factura →</button>
+        </div>
+        <div class="panel">
+          <h3>Vista previa (RIDE)</h3>
+          <p class="desc">Así se verá tu comprobante</p>
+          <div class="invoice" style="transform:none;animation:none;box-shadow:none;width:100%;background:#181818">
+            <div class="ih"><div><span class="t">Factura electrónica</span><h3 id="pvNum">001-001-000000148</h3></div><span class="badge-auth" id="pvBadge" style="opacity:.4">EN BORRADOR</span></div>
+            <div class="row"><span>Cliente</span><b id="pvClient">—</b></div>
+            <div class="row"><span>Fecha</span><b id="pvDate">—</b></div>
+            <div class="row"><span>Subtotal</span><b id="pvSub">$0,00</b></div>
+            <div class="row"><span>IVA</span><b id="pvIva">$0,00</b></div>
+            <div class="total"><span>Total</span><b id="pvTot">$0,00</b></div>
+            <div class="key" id="pvKey">Clave de acceso · pendiente de autorización</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGOS -->
+    <section class="page" id="page-pagos">
+      <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
+        <div class="kpi"><div class="lab">Por cobrar</div><div class="val mono" id="kPend">$0</div><div class="delta">Pendiente + vencido</div></div>
+        <div class="kpi"><div class="lab">Cobrado este mes</div><div class="val mono" id="kPaid">$0</div><div class="delta up">Flujo positivo</div></div>
+        <div class="kpi"><div class="lab">Facturas vencidas</div><div class="val mono" id="kVen">0</div><div class="delta">Requieren gestión</div></div>
+      </div>
+      <div class="panel">
+        <h3>Control de pagos</h3>
+        <p class="desc">Gestiona el estado de cobro de cada comprobante. Las vencidas generan notificación automática.</p>
+        <table><thead><tr><th>Comprobante</th><th>Cliente</th><th>Vence</th><th>Total</th><th>Estado</th><th></th></tr></thead><tbody id="payBody"></tbody></table>
+      </div>
+    </section>
+
+    <!-- PREDICCION -->
+    <section class="page" id="page-prediccion">
+      <div class="kpis" style="grid-template-columns:repeat(4,1fr)">
+        <div class="kpi"><div class="lab">Ingreso proyectado · mes 14</div><div class="val mono" id="pIngreso">$0</div><div class="delta up" id="pCrec">▲ 0%</div></div>
+        <div class="kpi"><div class="lab">Punto de equilibrio</div><div class="val" id="pEquilibrio" style="font-size:1.5rem">—</div><div class="delta" id="pEqDelta">Costos: $373/mes</div></div>
+        <div class="kpi"><div class="lab">Fondo recomendado</div><div class="val mono" id="pFondo">$0</div><div class="delta">Reserva de contingencia</div></div>
+        <div class="kpi"><div class="lab">Confianza del modelo</div><div class="val mono" id="pConf">0%</div><div class="delta">Basado en 9 meses</div></div>
+      </div>
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+          <div><h3>Predicción de flujo de caja</h3><p class="desc">Proyección a 6 meses del motor de IA según tu histórico de facturación, patrón de cobro y escenario.</p></div>
+          <div class="scenario-tabs" id="scenarioTabs">
+            <button class="sc-tab active" data-sc="moderado">Moderado</button>
+            <button class="sc-tab" data-sc="optimista">Optimista</button>
+            <button class="sc-tab" data-sc="critico">Crítico</button>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="lineChart" height="330"></canvas></div>
+        <div class="legend"><span><i style="background:var(--veil)"></i>Histórico real</span><span><i style="background:var(--fog)"></i>Proyección IA</span><span><i style="background:var(--iron);height:10px;border-radius:3px"></i>Banda de confianza</span><span><i style="background:#9bd49b;height:10px;width:2px"></i>Punto de equilibrio</span></div>
+        <div class="ai-note" id="aiNote">
+          <div class="ai-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="3.5"/></svg></div>
+          <p id="aiText"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- INTEGRACION SRI -->
+    <section class="page" id="page-sri">
+      <div class="kpis" style="grid-template-columns:repeat(4,1fr)">
+        <div class="kpi"><div class="lab">Estado del servicio</div><div class="val" style="font-size:1.4rem;color:#9bd49b">● En línea</div><div class="delta">Recepción + Autorización</div></div>
+        <div class="kpi"><div class="lab">Autorizados hoy</div><div class="val mono" id="sriToday">0</div><div class="delta up">100% aceptación</div></div>
+        <div class="kpi"><div class="lab">Latencia promedio</div><div class="val mono" id="sriLat">0 ms</div><div class="delta">Tiempo de respuesta</div></div>
+        <div class="kpi"><div class="lab">Ambiente</div><div class="val" style="font-size:1.4rem">Pruebas</div><div class="delta">Certificación SRI</div></div>
+      </div>
+      <div class="two">
+        <div class="panel">
+          <h3>Conexión con el SRI</h3>
+          <p class="desc">Estado de los web services del Servicio de Rentas Internas del Ecuador.</p>
+          <div class="ws-list">
+            <div class="ws"><div><b>Web Service de Recepción</b><small>Recibe el comprobante firmado</small></div><span class="tag ok">● Operativo</span></div>
+            <div class="ws"><div><b>Web Service de Autorización</b><small>Valida y autoriza el comprobante</small></div><span class="tag ok">● Operativo</span></div>
+            <div class="ws"><div><b>Certificado de firma digital</b><small>Token SRI · vigente hasta 2027</small></div><span class="tag ok">● Válido</span></div>
+            <div class="ws"><div><b>Sincronización de catálogos</b><small>IVA, retenciones y tarifas</small></div><span class="tag pend">⟳ Hace 2 h</span></div>
+          </div>
+          <button class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:16px" onclick="pingSri()">Probar conexión ahora</button>
+        </div>
+        <div class="panel">
+          <h3>Cumplimiento normativo</h3>
+          <p class="desc">El motor fiscal se mantiene alineado con las resoluciones vigentes.</p>
+          <div class="comp"><div class="comp-bar"><i style="width:99.5%"></i></div><div class="comp-row"><span>Precisión del cálculo fiscal</span><b>99.5%</b></div></div>
+          <div class="comp"><div class="comp-bar"><i style="width:100%"></i></div><div class="comp-row"><span>Comprobantes autorizados</span><b>100%</b></div></div>
+          <div class="comp"><div class="comp-bar"><i style="width:96%"></i></div><div class="comp-row"><span>Actualización normativa &lt; 48 h</span><b>96%</b></div></div>
+          <div class="ai-note" style="margin-top:18px"><div class="ai-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z"/></svg></div><p>Datos cifrados de extremo a extremo y firma electrónica con validez jurídica. Cumplimiento de la <b>LOPDP</b>.</p></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Registro de transmisiones</h3>
+        <p class="desc">Bitácora en tiempo real de los comprobantes enviados al SRI.</p>
+        <table><thead><tr><th>Hora</th><th>Comprobante</th><th>Acción</th><th>Respuesta SRI</th><th>Latencia</th></tr></thead><tbody id="sriLogBody"></tbody></table>
+      </div>
+    </section>
+
+    <!-- REPORTES & BSC -->
+    <section class="page" id="page-reportes">
+      <div class="panel">
+        <h3>Indicadores clave (KPIs)</h3>
+        <p class="desc">Las 10 métricas que monitoreamos para garantizar el cumplimiento de los objetivos SMART.</p>
+        <div class="kpi-grid" id="kpiGrid"></div>
+      </div>
+      <div class="panel">
+        <h3>Balanced Scorecard</h3>
+        <p class="desc">Cuatro perspectivas que alinean la estrategia con la operación del día a día.</p>
+        <div class="bsc">
+          <div class="bsc-card reveal-bsc" style="--accent:var(--veil)">
+            <div class="bsc-h"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><span>Financiera</span></div>
+            <p class="bsc-goal">Alcanzar el punto de equilibrio en el año 2</p>
+            <div class="bsc-meta"><b>$1.575/mes</b><small>MRR · mes 9 · plan Premium desde mes 6</small></div>
+          </div>
+          <div class="bsc-card reveal-bsc" style="--accent:var(--silver)">
+            <div class="bsc-h"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg><span>Cliente</span></div>
+            <p class="bsc-goal">Fidelizar y satisfacer a los usuarios</p>
+            <div class="bsc-meta"><b>NPS ≥ 75 · 85% retención</b><small>Monitoreo trimestral y soporte ágil</small></div>
+          </div>
+          <div class="bsc-card reveal-bsc" style="--accent:var(--fog)">
+            <div class="bsc-h"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg><span>Procesos internos</span></div>
+            <p class="bsc-goal">Garantizar disponibilidad y precisión</p>
+            <div class="bsc-meta"><b>Uptime ≥ 99.5% · &lt;48 h</b><small>Auditorías periódicas del motor fiscal</small></div>
+          </div>
+          <div class="bsc-card reveal-bsc" style="--accent:var(--iron)">
+            <div class="bsc-h"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M22 10L12 5 2 10l10 5 10-5zM6 12v5c0 1 2.7 3 6 3s6-2 6-3v-5"/></svg><span>Aprendizaje</span></div>
+            <p class="bsc-goal">Fortalecer al equipo y al producto</p>
+            <div class="bsc-meta"><b>3 funcionalidades / 12 meses</b><small>Sprints quincenales y revisiones internas</small></div>
+          </div>
+        </div>
+      </div>
+      <div class="two">
+        <div class="panel">
+          <h3>Recursos y presupuesto</h3>
+          <p class="desc">Estructura de inversión inicial y costos operativos mensuales.</p>
+          <table>
+            <thead><tr><th>Concepto</th><th>Tipo</th><th>Monto</th></tr></thead>
+            <tbody>
+              <tr><td><b>Inversión inicial</b></td><td>Único</td><td><b class="mono">$450</b></td></tr>
+              <tr><td>Constitución legal · firma · dominio · marca</td><td>Detalle</td><td class="mono">$405</td></tr>
+              <tr><td><b>Costos operativos</b></td><td>Mensual</td><td><b class="mono">$373</b></td></tr>
+              <tr><td>Workspace · pasarela · marketing · API · legal</td><td>Detalle</td><td class="mono">$343</td></tr>
+              <tr><td>Fondo de contingencia</td><td>Mensual</td><td class="mono">$30</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <h3>Plan de contingencia</h3>
+          <p class="desc">Riesgos identificados y su mitigación.</p>
+          <div class="risk"><div class="risk-h"><span class="dotr"></span>Caída del sistema</div><p>Respaldos automáticos y monitoreo con alertas en tiempo real.</p></div>
+          <div class="risk"><div class="risk-h"><span class="dotr"></span>Cambios en normativa SRI</div><p>Suscripción a notificaciones oficiales + revisión semanal del motor fiscal.</p></div>
+          <div class="risk"><div class="risk-h"><span class="dotr"></span>Fuga de información</div><p>Autenticación de dos factores y cifrado de datos sensibles.</p></div>
+          <div class="risk"><div class="risk-h"><span class="dotr"></span>Abandono de usuarios</div><p>Estrategias de retención y soporte proactivo.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LA EMPRESA -->
+    <section class="page" id="page-empresa">
+      <div class="emp-hero panel">
+        <div class="emp-hero-copy">
+          <span class="pill" style="margin-bottom:16px;display:inline-flex">● Acerca de nosotros</span>
+          <h2 class="about-title" style="font-size:clamp(1.8rem,3.6vw,2.8rem);margin:0 0 16px">No somos una contadora más.<br>Somos una <em>startup ágil</em>.</h2>
+          <p class="about-lede" style="font-size:1rem">ElectroFact App es una microempresa tecnológica de 8 integrantes que nace para modernizar la facturación de los trabajadores independientes. Operamos bajo un <b>modelo administrativo contemporáneo</b>: nos adaptamos al entorno, aprendemos rápido y ponemos al cliente en el centro de cada decisión.</p>
+        </div>
+        <div class="about-metrics" style="margin:0;border:none;padding:0">
+          <div class="am"><b class="am-num" data-count="8">0</b><span>Integrantes</span></div>
+          <div class="am"><b class="am-num" data-count="100" data-suffix="%">0%</b><span>Trabajo remoto</span></div>
+          <div class="am"><b class="am-num" data-count="373" data-prefix="$">$0</b><span>Costo op. / mes</span></div>
+          <div class="am"><b class="am-num" data-count="15" data-suffix="d">0d</b><span>Ciclo por sprint</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Nuestra metodología</h3>
+        <p class="desc">Cultura adhocrática: estructura plana, decisiones sin burocracia y mejora continua. Cada principio del modelo contemporáneo guía cómo construimos.</p>
+        <div class="method-line">
+          <div class="mstep"><div class="mdot">01</div><h4>Adaptabilidad sistémica</h4><p>Reconfiguramos el software de inmediato ante cada cambio normativo del SRI.</p></div>
+          <div class="mstep"><div class="mdot">02</div><h4>Fall fast, learn fast</h4><p>Lanzamos versiones rápido, medimos resultados y ajustamos el rumbo con agilidad.</p></div>
+          <div class="mstep"><div class="mdot">03</div><h4>Sprints quincenales</h4><p>Iteramos en ciclos de 15 días con revisiones internas y entregas continuas.</p></div>
+          <div class="mstep"><div class="mdot">04</div><h4>Enfoque en el cliente</h4><p>Cada decisión gira en torno a simplificar la vida fiscal del freelancer digital.</p></div>
+        </div>
+        <div class="values-strip" style="margin:26px 0 0">
+          <div class="values-track">
+            <span>Responsabilidad ✦ Compromiso ✦ Honestidad ✦ Transparencia ✦ Confianza ✦ Seguridad ✦</span>
+            <span>Responsabilidad ✦ Compromiso ✦ Honestidad ✦ Transparencia ✦ Confianza ✦ Seguridad ✦</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>¿Por qué somos diferentes?</h3>
+        <p class="desc">Frente a plataformas generalistas como Alegra o QuickBooks, apostamos por la hiperespecialización: una herramienta hecha a la medida del freelancer ecuatoriano.</p>
+        <div class="bench-table">
+          <div class="bt-row bt-head"><span>Aspecto</span><span>Competidores</span><span class="us">ElectroFact</span></div>
+          <div class="bt-row"><span>Público objetivo</span><span>Empresas generales</span><span class="us">Freelancers digitales</span></div>
+          <div class="bt-row"><span>Automatización</span><span>Parcial</span><span class="us">Completa con IA</span></div>
+          <div class="bt-row"><span>Adaptación al SRI</span><span>Limitada</span><span class="us">Especializada Ecuador</span></div>
+          <div class="bt-row"><span>Facilidad de uso</span><span>Media</span><span class="us">Alta · sin contador</span></div>
+          <div class="bt-row"><span>Funciones IA</span><span>Básicas</span><span class="us">Predicción + clasificación</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3 style="text-align:center">El equipo · Grupo 2</h3>
+        <p class="desc" style="text-align:center">UNEMI · Ingeniería de Software · Administración General · 2026</p>
+        <div class="team-grid" style="margin-top:24px">
+          <div class="member"><div class="mav">JT</div><b>Jose Torres</b><span>Gerencia</span></div>
+          <div class="member"><div class="mav">MR</div><b>Marcos Robinson</b><span>Desarrollo</span></div>
+          <div class="member"><div class="mav">JC</div><b>Jonathan Castro</b><span>Desarrollo</span></div>
+          <div class="member"><div class="mav">MA</div><b>Mayra Aguilar</b><span>Desarrollo</span></div>
+          <div class="member"><div class="mav">GG</div><b>Genesis Guevara</b><span>Admin. y Finanzas</span></div>
+          <div class="member"><div class="mav">NY</div><b>Nadia Yanza</b><span>Admin. y Finanzas</span></div>
+          <div class="member"><div class="mav">LV</div><b>Luis Velez</b><span>Soporte</span></div>
+          <div class="member"><div class="mav">JP</div><b>Jamile Parra</b><span>Soporte</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- SRI authorization modal -->
+<div class="overlay" id="sriOverlay">
+  <div class="modal">
+    <div id="sriProcess">
+      <h3>Autorización electrónica</h3>
+      <p class="ms">Procesando tu comprobante ante el Servicio de Rentas Internas…</p>
+      <div class="steps">
+        <div class="step" data-step="0"><div class="ring"></div><div class="tx">Generando clave de acceso<small>Algoritmo módulo 11</small></div></div>
+        <div class="step" data-step="1"><div class="ring"></div><div class="tx">Firmando con certificado digital<small>Token SRI · XAdES-BES</small></div></div>
+        <div class="step" data-step="2"><div class="ring"></div><div class="tx">Enviando al SRI<small>Web service de recepción</small></div></div>
+        <div class="step" data-step="3"><div class="ring"></div><div class="tx">Validando comprobante<small>Web service de autorización</small></div></div>
+      </div>
+    </div>
+    <div class="authdone" id="sriDone">
+      <div class="check"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></div>
+      <h3>Comprobante autorizado</h3>
+      <p class="ms">El SRI ha autorizado tu factura electrónica.</p>
+      <div class="authbox">
+        <div class="r"><span>Estado</span><b style="color:#cfe9cf">AUTORIZADO</b></div>
+        <div class="r"><span>N.º autorización</span><b class="mono" id="authNum">—</b></div>
+        <div class="r"><span>Fecha</span><b class="mono" id="authDate">—</b></div>
+        <div class="r"><span>Ambiente</span><b>Pruebas (simulado)</b></div>
+        <div class="key" id="authKey">—</div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="closeSri()">Listo</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ LANDING ANIMATIONS ============ */
+// generic count-up
+function countUp(el,dur=1400){
+  if(el.dataset.done)return; el.dataset.done=1;
+  const target=parseFloat(el.dataset.count),pre=el.dataset.prefix||'',suf=el.dataset.suffix||'';
+  const t0=performance.now();
+  function step(t){const p=Math.min((t-t0)/dur,1),e=1-Math.pow(1-p,3),cur=target*e;
+    el.innerHTML=pre+(target%1?cur.toFixed(1):Math.round(cur))+suf;
+    if(p<1)requestAnimationFrame(step);}
+  requestAnimationFrame(step);
+}
+function animateCounts(){document.querySelectorAll('.stats b[data-count]').forEach(el=>countUp(el));}
+setTimeout(animateCounts,1000);
+
+// reveal on scroll (+ count-up for about metrics)
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){
+  e.target.classList.add('in');
+  const num=e.target.querySelector('.am-num[data-count]');if(num)countUp(num,1200);
+  io.unobserve(e.target);
+}})},{threshold:.18});
+document.querySelectorAll('.reveal').forEach((el,i)=>{el.style.transitionDelay=(i%3*0.08)+'s';io.observe(el)});
+
+// subtle parallax on invoice
+const visual=document.querySelector('.hero-visual');
+if(visual){
+  document.getElementById('landing').addEventListener('mousemove',e=>{
+    const r=visual.getBoundingClientRect();
+    const x=(e.clientX-r.left-r.width/2)/r.width, y=(e.clientY-r.top-r.height/2)/r.height;
+    const inv=visual.querySelector('.invoice');
+    if(inv)inv.style.transform=`rotateY(${-16+x*8}deg) rotateX(${6-y*8}deg)`;
+  });
+}
+
+// cursor spotlight (only over landing)
+const spot=document.getElementById('spotlight');
+const landingEl=document.getElementById('landing');
+window.addEventListener('mousemove',e=>{
+  spot.style.left=e.clientX+'px';spot.style.top=e.clientY+'px';
+  const overLanding=landingEl.style.display!=='none' && e.clientY < landingEl.getBoundingClientRect().bottom;
+  spot.style.opacity=overLanding?1:0;
+});
+
+// particle network on hero
+(function(){
+  const cv=document.getElementById('particles');if(!cv)return;const ctx=cv.getContext('2d');
+  let pts=[],W,H,raf;
+  function resize(){const r=landingEl.getBoundingClientRect();W=cv.width=r.width;H=cv.height=r.height;
+    const count=Math.min(60,Math.floor(W/26));
+    pts=Array.from({length:count},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.35,vy:(Math.random()-.5)*.35,r:Math.random()*1.6+.6}));}
+  function tick(){
+    ctx.clearRect(0,0,W,H);
+    for(const p of pts){
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fillStyle='rgba(179,179,179,.5)';ctx.fill();
+    }
+    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+      const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.hypot(dx,dy);
+      if(d<130){ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);
+        ctx.strokeStyle='rgba(132,132,132,'+(1-d/130)*.22+')';ctx.lineWidth=1;ctx.stroke();}
+    }
+    raf=requestAnimationFrame(tick);
+  }
+  resize();tick();
+  window.addEventListener('resize',()=>{if(landingEl.style.display!=='none')resize();});
+})();
+
+/* ============ APP STATE ============ */
+let clients=[
+  {name:'Estudio Nómada S.A.',id:'0190123456001',mail:'hola@nomada.ec',billed:5750},
+  {name:'Laura Méndez (Freelance)',id:'1712345678',mail:'laura.m@gmail.com',billed:2100},
+  {name:'Pixel Forge Agency',id:'0992345678001',mail:'pay@pixelforge.co',billed:9320},
+  {name:'Carlos Ibarra',id:'0923456781',mail:'c.ibarra@proton.me',billed:1480},
+];
+let invoices=[
+  {num:'001-001-000000147',client:'Estudio Nómada S.A.',date:'28/10/2026',total:1437.50,sri:'ok',pay:'paid',due:'05/11/2026'},
+  {num:'001-001-000000146',client:'Pixel Forge Agency',date:'25/10/2026',total:2300.00,sri:'ok',pay:'pend',due:'08/11/2026'},
+  {num:'001-001-000000145',client:'Laura Méndez (Freelance)',date:'19/10/2026',total:483.00,sri:'ok',pay:'paid',due:'02/11/2026'},
+  {num:'001-001-000000144',client:'Carlos Ibarra',date:'10/10/2026',total:851.00,sri:'ok',pay:'ven',due:'20/10/2026'},
+];
+let seq=148;
+
+/* SRI transmission log */
+let sriLog=[
+  {time:'09:42:11',num:'001-001-000000147',act:'Autorización',resp:'AUTORIZADO',lat:412},
+  {time:'09:18:55',num:'001-001-000000146',act:'Autorización',resp:'AUTORIZADO',lat:386},
+  {time:'08:51:30',num:'001-001-000000146',act:'Recepción',resp:'RECIBIDA',lat:204},
+];
+/* scenario projections (en miles USD) */
+const scenarios={
+  moderado:{proj:[10.8,11.6,12.4,13.0,13.9,14.8],growth:18,conf:87,label:'Moderado',txt:'Crecimiento estable con cambios tributarios controlados. Es el escenario <b>más probable</b>. El flujo crece <b>+18%</b> hasta el mes 14, sostenido por una retención del 85% y el plan Premium. El punto de equilibrio se alcanza en el <b>mes 11</b>.'},
+  optimista:{proj:[11.2,13.0,14.9,16.8,18.6,20.4],growth:42,conf:71,label:'Optimista',txt:'Mayor digitalización y expansión rápida del mercado freelancer. El flujo crece <b>+42%</b> y el equilibrio llega antes, en el <b>mes 9</b>. Se recomienda anticipar la contratación de soporte para no generar cuellos de botella.'},
+  critico:{proj:[10.4,10.1,9.6,9.9,10.2,10.7],growth:-1,conf:64,label:'Crítico',txt:'Cambios frecuentes del SRI y mayor competencia frenan el crecimiento (<b>-1%</b>). El equilibrio se posterga al <b>año 2</b>. Es clave reforzar el fondo de contingencia y los mecanismos de actualización normativa &lt; 48 h.'}
+};
+let scenario='moderado';
+
+/* ============ NAV ============ */
+function enterApp(){
+  document.getElementById('landing').style.display='none';
+  document.getElementById('features').style.display='none';
+  const app=document.getElementById('app');app.classList.add('show');
+  window.scrollTo(0,0);
+  renderAll();
+  setTimeout(()=>{animateKpis();drawBar();drawDonut();},120);
+}
+function exitApp(){
+  document.getElementById('app').classList.remove('show');
+  document.getElementById('landing').style.display='flex';
+  document.getElementById('features').style.display='block';
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.navbtn').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  const p=b.dataset.page;
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.getElementById('side').classList.remove('open');
+  const titles={resumen:['Resumen ejecutivo','Estado general de tu operación · Octubre 2026'],clientes:['Clientes','Cartera de clientes registrados'],facturar:['Facturación electrónica','Emite comprobantes autorizados por el SRI'],pagos:['Control de pagos','Seguimiento de cobros y vencimientos'],prediccion:['Predicción IA','Proyección de flujo de caja a 6 meses'],sri:['Integración SRI','Conexión con el Servicio de Rentas Internas'],reportes:['Reportes & BSC','KPIs y Balanced Scorecard de la operación'],empresa:['La empresa','Quiénes somos, metodología y equipo']};
+  document.getElementById('pageTitle').innerHTML=titles[p][0]+'<small>'+titles[p][1]+'</small>';
+  if(p==='prediccion')setTimeout(()=>{renderPrediction();drawLine();},60);
+  if(p==='resumen')setTimeout(()=>{drawBar();drawDonut();},60);
+  if(p==='sri')setTimeout(renderSri,60);
+  if(p==='reportes')setTimeout(renderReportes,60);
+  if(p==='empresa')setTimeout(()=>{document.querySelectorAll('#page-empresa .am-num[data-count]').forEach(el=>countUp(el,1200));},80);
+});
+
+/* abrir la app directamente en La empresa desde el inicio */
+function goEmpresa(){enterApp();const b=document.querySelector('.navbtn[data-page="empresa"]');if(b)b.click();}
+
+/* ============ RENDER ============ */
+const money=n=>'$'+n.toLocaleString('es-EC',{minimumFractionDigits:2,maximumFractionDigits:2});
+const money0=n=>'$'+Math.round(n).toLocaleString('es-EC');
+
+function renderAll(){renderRecent();renderClients();renderFClientOptions();renderPay();renderPayKpis();renderNotif();}
+
+/* ============ NOTIFICATIONS ============ */
+function renderNotif(){
+  const items=invoices.filter(i=>i.pay==='ven'||i.pay==='pend');
+  const c=document.getElementById('notifCount');
+  c.textContent=items.length;c.classList.toggle('zero',items.length===0);
+  const pop=document.getElementById('notifPop');
+  pop.innerHTML='<div class="nh">Notificaciones de vencimiento</div>'+(items.length?items.map(i=>{
+    const ven=i.pay==='ven';
+    return `<div class="notif-item"><span class="ni-dot ${ven?'ven':'soon'}"></span><div><b>${ven?'Factura vencida':'Próxima a vencer'}</b><small>${i.num} · ${i.client} · vence ${i.due} · ${money(i.total)}</small></div></div>`;
+  }).join(''):'<div class="notif-item"><small>Sin vencimientos pendientes</small></div>');
+}
+function toggleNotif(){document.getElementById('notifPop').classList.toggle('show');}
+document.addEventListener('click',e=>{const b=document.getElementById('bell');if(b&&!b.contains(e.target))document.getElementById('notifPop').classList.remove('show');});
+
+/* ============ REPORTES ============ */
+const KPIS=[
+  ['200','Clientes activos · mes 6'],['99.5%','Precisión fiscal mensual'],['<5 s','Emisión por factura'],['75 pts','NPS al año 1'],['85%','Retención mensual'],
+  ['<4 h','Respuesta de soporte'],['99.5%','Uptime del sistema'],['<48 h','Actualización normativa'],['$1.575','MRR · mes 9'],['70%','Menos tiempo admin.']
+];
+let reportesDone=false;
+function renderReportes(){
+  const g=document.getElementById('kpiGrid');
+  if(!reportesDone){g.innerHTML=KPIS.map(k=>`<div class="kc"><div class="kv">${k[0]}</div><div class="kl">${k[1]}</div></div>`).join('');reportesDone=true;}
+}
+
+function renderRecent(){
+  const tag={ok:'<span class="tag ok">●&nbsp;Autorizado</span>'};
+  document.getElementById('recentBody').innerHTML=invoices.slice(0,5).map(i=>
+    `<tr><td><b class="mono">${i.num}</b></td><td>${i.client}</td><td class="mono">${i.date}</td><td><b class="mono">${money(i.total)}</b></td><td>${tag.ok}</td></tr>`).join('');
+}
+function renderClients(){
+  document.getElementById('clientBody').innerHTML=clients.map(c=>
+    `<tr><td><b>${c.name}</b></td><td class="mono">${c.id}</td><td>${c.mail}</td><td><b class="mono">${money0(c.billed)}</b></td></tr>`).join('');
+}
+function renderFClientOptions(){
+  document.getElementById('fClient').innerHTML=clients.map(c=>`<option>${c.name}</option>`).join('');
+  updatePreview();
+}
+function renderPay(){
+  const tags={paid:'<span class="tag ok">●&nbsp;Pagada</span>',pend:'<span class="tag pend">●&nbsp;Pendiente</span>',ven:'<span class="tag ven">●&nbsp;Vencida</span>'};
+  document.getElementById('payBody').innerHTML=invoices.map((i,idx)=>{
+    const btn=i.pay==='paid'?'<span style="color:var(--fog);font-size:.8rem">—</span>':`<button class="del" style="width:auto;padding:6px 12px;font-size:.74rem;font-family:var(--sans);color:var(--silver)" onclick="markPaid(${idx})">Marcar pagada</button>`;
+    return `<tr><td><b class="mono">${i.num}</b></td><td>${i.client}</td><td class="mono">${i.due}</td><td><b class="mono">${money(i.total)}</b></td><td>${tags[i.pay]}</td><td style="text-align:right">${btn}</td></tr>`;
+  }).join('');
+}
+function renderPayKpis(){
+  const pend=invoices.filter(i=>i.pay!=='paid').reduce((s,i)=>s+i.total,0);
+  const paid=invoices.filter(i=>i.pay==='paid').reduce((s,i)=>s+i.total,0);
+  const ven=invoices.filter(i=>i.pay==='ven').length;
+  document.getElementById('kPend').textContent=money0(pend);
+  document.getElementById('kPaid').textContent=money0(paid);
+  document.getElementById('kVen').textContent=ven;
+}
+function markPaid(idx){invoices[idx].pay='paid';renderPay();renderPayKpis();renderNotif();drawDonut();toast('Pago registrado · cartera actualizada');}
+
+/* ============ CLIENTS ============ */
+function addClient(){
+  const n=document.getElementById('cName').value.trim();
+  const id=document.getElementById('cId').value.trim();
+  const m=document.getElementById('cMail').value.trim();
+  if(!n||!id){toast('Completa nombre e identificación');return;}
+  clients.unshift({name:n,id:id,mail:m||'—',billed:0});
+  document.getElementById('cName').value='';document.getElementById('cId').value='';document.getElementById('cMail').value='';
+  renderClients();renderFClientOptions();
+  toast('Cliente «'+n+'» registrado');
+}
+
+/* ============ INVOICE BUILDER ============ */
+function lineRow(desc='Servicio profesional',qty=1,price=0){
+  const div=document.createElement('div');div.className='lineitem';
+  div.innerHTML=`<input class="li-desc" value="${desc}" oninput="updatePreview()"><input class="li-qty" type="number" min="1" value="${qty}" oninput="updatePreview()"><input class="li-price" type="number" min="0" step="0.01" value="${price}" placeholder="0.00" oninput="updatePreview()"><button class="del" onclick="this.parentElement.remove();updatePreview()">×</button>`;
+  return div;
+}
+function addLine(){document.getElementById('lineItems').appendChild(lineRow('Servicio profesional',1,0));updatePreview();}
+function calcTotals(){
+  let sub=0;
+  document.querySelectorAll('#lineItems .lineitem').forEach(r=>{
+    const q=parseFloat(r.querySelector('.li-qty').value)||0;
+    const p=parseFloat(r.querySelector('.li-price').value)||0;
+    sub+=q*p;
+  });
+  const iva=sub*0.15, ret=sub*0.01, tot=sub+iva-ret;
+  return {sub,iva,ret,tot};
+}
+function updatePreview(){
+  const t=calcTotals();
+  document.getElementById('tSub').textContent=money(t.sub);
+  document.getElementById('tIva').textContent=money(t.iva);
+  document.getElementById('tRet').textContent=money(t.ret);
+  document.getElementById('tTot').textContent=money(t.tot);
+  const num='001-001-'+String(seq).padStart(9,'0');
+  document.getElementById('pvNum').textContent=num;
+  document.getElementById('pvClient').textContent=document.getElementById('fClient').value||'—';
+  document.getElementById('pvDate').textContent=today();
+  document.getElementById('pvSub').textContent=money(t.sub);
+  document.getElementById('pvIva').textContent=money(t.iva);
+  document.getElementById('pvTot').textContent=money(t.tot);
+}
+function today(){const d=new Date();return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();}
+function genKey(){let s='';for(let i=0;i<49;i++)s+=Math.floor(Math.random()*10);return s.replace(/(.{8})/g,'$1 ').trim();}
+
+/* ============ SRI EMISSION ============ */
+let emitData=null;
+function emit(){
+  const t=calcTotals();
+  if(t.sub<=0){toast('Agrega al menos una línea con valor');return;}
+  const client=document.getElementById('fClient').value;
+  const num='001-001-'+String(seq).padStart(9,'0');
+  emitData={num,client,total:t.tot,key:genKey()};
+  // open modal & run steps
+  const ov=document.getElementById('sriOverlay');
+  document.getElementById('sriProcess').style.display='block';
+  document.getElementById('sriDone').classList.remove('show');
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active','done'));
+  ov.classList.add('show');
+  runStep(0);
+}
+function runStep(i){
+  const steps=document.querySelectorAll('.step');
+  if(i>0)steps[i-1].classList.add('done');
+  if(i<steps.length){
+    steps[i].classList.add('active');
+    setTimeout(()=>{steps[i].classList.remove('active');runStep(i+1);},850+Math.random()*350);
+  }else{
+    // done
+    document.getElementById('authNum').textContent=Date.now().toString().slice(0,10)+'01';
+    document.getElementById('authDate').textContent=today()+' '+new Date().toLocaleTimeString('es-EC',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('authKey').textContent=emitData.key;
+    setTimeout(()=>{document.getElementById('sriProcess').style.display='none';document.getElementById('sriDone').classList.add('show');},300);
+  }
+}
+function closeSri(){
+  document.getElementById('sriOverlay').classList.remove('show');
+  // commit invoice
+  invoices.unshift({num:emitData.num,client:emitData.client,date:today(),total:emitData.total,sri:'ok',pay:'pend',due:dueDate()});
+  const c=clients.find(x=>x.name===emitData.client);if(c)c.billed+=emitData.total;
+  // log SRI transmissions
+  const now=new Date().toLocaleTimeString('es-EC',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  sriLog.unshift({time:now,num:emitData.num,act:'Autorización',resp:'AUTORIZADO',lat:360+Math.floor(Math.random()*120)});
+  sriLog.unshift({time:now,num:emitData.num,act:'Recepción',resp:'RECIBIDA',lat:180+Math.floor(Math.random()*70)});
+  seq++;
+  // reset builder
+  document.getElementById('lineItems').innerHTML='';
+  document.getElementById('lineItems').appendChild(lineRow('Servicio profesional',1,0));
+  updatePreview();
+  renderAll();drawBar();drawDonut();
+  toast('Factura '+emitData.num+' autorizada por el SRI');
+}
+function dueDate(){const d=new Date();d.setDate(d.getDate()+8);return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();}
+
+/* ============ KPI COUNTERS ============ */
+function animateKpis(){
+  document.querySelectorAll('.kpi .val[data-kcount]').forEach(el=>{
+    const target=parseFloat(el.dataset.kcount),pre=el.dataset.prefix||'',suf=el.dataset.suffix||'';
+    const dur=1100,t0=performance.now();
+    function step(t){const p=Math.min((t-t0)/dur,1),e=1-Math.pow(1-p,3),cur=target*e;
+      el.textContent=pre+(target%1?cur.toFixed(1):Math.round(cur).toLocaleString('es-EC'))+suf;
+      if(p<1)requestAnimationFrame(step);}
+    requestAnimationFrame(step);
+  });
+}
+
+/* ============ CHARTS (canvas) ============ */
+function dpiSetup(cv){const r=cv.getBoundingClientRect();const dpr=window.devicePixelRatio||1;cv.width=r.width*dpr;cv.height=r.height*dpr;const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);return{ctx,w:r.width,h:r.height};}
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+function drawBar(){
+  const cv=document.getElementById('barChart');if(!cv)return;const{ctx,w,h}=dpiSetup(cv);
+  const data=[ [3200,3000],[4100,3800],[3900,3600],[5200,4800],[6100,5500],[7300,6900],[8400,7800],[9200,8600],[10800,9900] ];
+  const labels=['M1','M2','M3','M4','M5','M6','M7','M8','M9'];
+  const max=12000,pad=30,bw=(w-pad*2)/data.length;
+  ctx.clearRect(0,0,w,h);
+  // gridlines
+  ctx.strokeStyle=css('--line');ctx.lineWidth=1;ctx.font='10px Space Mono';ctx.fillStyle=css('--fog');
+  for(let g=0;g<=4;g++){const y=pad+(h-pad*2)*(g/4);ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(w-pad,y);ctx.stroke();ctx.fillText('$'+Math.round(max*(1-g/4)/1000)+'k',2,y-3);}
+  const t0=performance.now();
+  function frame(t){
+    const p=Math.min((t-t0)/900,1),e=1-Math.pow(1-p,3);
+    ctx.clearRect(0,0,w,h);
+    ctx.strokeStyle=css('--line');ctx.fillStyle=css('--fog');ctx.font='10px Space Mono';
+    for(let g=0;g<=4;g++){const y=pad+(h-pad*2)*(g/4);ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(w-pad,y);ctx.stroke();ctx.fillText('$'+Math.round(max*(1-g/4)/1000)+'k',2,y-3);}
+    data.forEach((d,i)=>{
+      const x=pad+bw*i+bw*0.18;const bwi=bw*0.28;
+      const h1=(h-pad*2)*(d[0]/max)*e,h2=(h-pad*2)*(d[1]/max)*e;
+      ctx.fillStyle=css('--veil');ctx.fillRect(x,h-pad-h1,bwi,h1);
+      ctx.fillStyle=css('--iron');ctx.fillRect(x+bwi+3,h-pad-h2,bwi,h2);
+      ctx.fillStyle=css('--fog');ctx.textAlign='center';ctx.fillText(labels[i],x+bwi,h-pad+14);ctx.textAlign='left';
+    });
+    if(p<1)requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+function drawDonut(){
+  const cv=document.getElementById('donutChart');if(!cv)return;const{ctx,w,h}=dpiSetup(cv);
+  const paid=invoices.filter(i=>i.pay==='paid').length;
+  const pend=invoices.filter(i=>i.pay==='pend').length;
+  const ven=invoices.filter(i=>i.pay==='ven').length;
+  const total=Math.max(paid+pend+ven,1);
+  const segs=[[paid,css('--veil')],[pend,css('--fog')],[ven,css('--iron')]];
+  const cx=w/2,cy=h/2,r=Math.min(w,h)/2-24,ir=r*0.62;
+  const t0=performance.now();
+  function frame(t){
+    const p=Math.min((t-t0)/900,1),e=1-Math.pow(1-p,3);
+    ctx.clearRect(0,0,w,h);
+    let a=-Math.PI/2;
+    segs.forEach(s=>{
+      const ang=(s[0]/total)*Math.PI*2*e;
+      ctx.beginPath();ctx.fillStyle=s[1];
+      ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,a,a+ang);ctx.closePath();ctx.fill();
+      a+=ang;
+    });
+    ctx.globalCompositeOperation='destination-out';
+    ctx.beginPath();ctx.arc(cx,cy,ir,0,Math.PI*2);ctx.fill();
+    ctx.globalCompositeOperation='source-over';
+    ctx.fillStyle=css('--paper');ctx.font='700 26px Space Mono';ctx.textAlign='center';
+    ctx.fillText(total,cx,cy);
+    ctx.fillStyle=css('--fog');ctx.font='10px Archivo';ctx.fillText('FACTURAS',cx,cy+18);ctx.textAlign='left';
+    if(p<1)requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+function drawLine(){
+  const cv=document.getElementById('lineChart');if(!cv)return;const{ctx,w,h}=dpiSetup(cv);
+  const real=[3.2,4.1,3.9,5.2,6.1,7.3,8.4,9.2,10.8];
+  const proj=scenarios[scenario].proj;
+  const all=real.concat(proj.slice(1));
+  const max=22,pad=38,n=all.length;
+  const X=i=>pad+(w-pad*2)*(i/(n-1));
+  const Y=v=>h-pad-(h-pad*2)*(v/max);
+  // break-even level (costos $373/mes -> 0.373k) line near bottom for reference
+  const beLevel=0.373;
+  const labels=['M1','M3','M5','M7','M9','M11','M14'];
+  const t0=performance.now();
+  function frame(t){
+    const p=Math.min((t-t0)/1200,1),e=1-Math.pow(1-p,3);
+    ctx.clearRect(0,0,w,h);
+    // grid
+    ctx.strokeStyle=css('--line');ctx.fillStyle=css('--fog');ctx.font='10px Space Mono';
+    for(let g=0;g<=4;g++){const y=pad+(h-pad*2)*(g/4);ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(w-pad,y);ctx.stroke();ctx.fillText('$'+Math.round(max*(1-g/4))+'k',2,y-3);}
+    const drawTo=Math.floor((n-1)*e)+1;
+
+    // confidence band around projection
+    if(drawTo>real.length-1){
+      const up=[],dn=[];
+      for(let i=real.length-1;i<Math.min(drawTo,n);i++){const v=all[i];const spread=(i-(real.length-1))*0.55+0.4;up.push([i,v+spread]);dn.push([i,v-spread]);}
+      ctx.beginPath();ctx.moveTo(X(up[0][0]),Y(up[0][1]));
+      up.forEach(pt=>ctx.lineTo(X(pt[0]),Y(pt[1])));
+      for(let k=dn.length-1;k>=0;k--)ctx.lineTo(X(dn[k][0]),Y(dn[k][1]));
+      ctx.closePath();ctx.fillStyle='rgba(132,132,132,.18)';ctx.fill();
+    }
+
+    // area under real
+    ctx.beginPath();ctx.moveTo(X(0),Y(real[0]));
+    for(let i=1;i<Math.min(drawTo,real.length);i++)ctx.lineTo(X(i),Y(real[i]));
+    const lastReal=Math.min(drawTo,real.length)-1;
+    ctx.lineTo(X(lastReal),h-pad);ctx.lineTo(X(0),h-pad);ctx.closePath();
+    const grad=ctx.createLinearGradient(0,pad,0,h);grad.addColorStop(0,'rgba(224,224,224,.16)');grad.addColorStop(1,'rgba(224,224,224,0)');
+    ctx.fillStyle=grad;ctx.fill();
+    // real line
+    ctx.beginPath();ctx.strokeStyle=css('--veil');ctx.lineWidth=2.6;ctx.lineJoin='round';
+    ctx.moveTo(X(0),Y(real[0]));
+    for(let i=1;i<Math.min(drawTo,real.length);i++)ctx.lineTo(X(i),Y(real[i]));
+    ctx.stroke();
+    // projection dashed
+    if(drawTo>real.length-1){
+      ctx.beginPath();ctx.strokeStyle=css('--fog');ctx.lineWidth=2.2;ctx.setLineDash([7,5]);
+      ctx.moveTo(X(real.length-1),Y(real[real.length-1]));
+      for(let i=real.length;i<Math.min(drawTo,n);i++)ctx.lineTo(X(i),Y(all[i]));
+      ctx.stroke();ctx.setLineDash([]);
+    }
+    // dots
+    for(let i=0;i<Math.min(drawTo,n);i++){
+      ctx.beginPath();ctx.fillStyle=i<real.length?css('--paper'):css('--silver');
+      ctx.arc(X(i),Y(all[i]),i===n-1?5:3,0,Math.PI*2);ctx.fill();
+    }
+    // "hoy" divider at end of real
+    if(p>0.6){
+      const xh=X(real.length-1);ctx.strokeStyle='rgba(155,212,155,.45)';ctx.lineWidth=1.5;ctx.setLineDash([3,4]);
+      ctx.beginPath();ctx.moveTo(xh,pad);ctx.lineTo(xh,h-pad);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle='#9bd49b';ctx.font='700 9px Space Mono';ctx.textAlign='center';ctx.fillText('HOY',xh,pad-4);ctx.textAlign='left';
+    }
+    // final value callout
+    if(p>=1){
+      const xi=X(n-1),yi=Y(all[n-1]);
+      ctx.fillStyle=css('--paper');ctx.font='700 13px Space Mono';ctx.textAlign='right';
+      ctx.fillText('$'+all[n-1].toFixed(1)+'k',xi-8,yi-10);ctx.textAlign='left';
+    }
+    // x labels
+    ctx.fillStyle=css('--fog');ctx.font='10px Space Mono';ctx.textAlign='center';
+    labels.forEach((l,i)=>{const xi=Math.round((n-1)*(i/(labels.length-1)));ctx.fillText(l,X(xi),h-pad+16);});
+    ctx.textAlign='left';
+    if(p<1)requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ============ PREDICTION PANEL ============ */
+function renderPrediction(){
+  const s=scenarios[scenario];
+  const last=s.proj[s.proj.length-1];
+  document.getElementById('pIngreso').textContent=money0(last*1000);
+  const cr=document.getElementById('pCrec');
+  cr.textContent=(s.growth>=0?'▲ +':'▼ ')+s.growth+'%';
+  cr.className='delta '+(s.growth>=0?'up':'');
+  const eq={moderado:['Mes 11','Dentro del año 1'],optimista:['Mes 9','Adelantado'],critico:['Año 2','En riesgo']}[scenario];
+  document.getElementById('pEquilibrio').textContent=eq[0];
+  document.getElementById('pEqDelta').textContent=eq[1];
+  document.getElementById('pFondo').textContent=money0(last*1000*0.08);
+  document.getElementById('pConf').textContent=s.conf+'%';
+  document.getElementById('aiText').innerHTML='<b>Análisis del motor IA · escenario '+s.label+':</b> '+s.txt;
+}
+/* scenario tabs */
+document.querySelectorAll('#scenarioTabs .sc-tab').forEach(tab=>tab.onclick=()=>{
+  document.querySelectorAll('#scenarioTabs .sc-tab').forEach(x=>x.classList.remove('active'));
+  tab.classList.add('active');
+  scenario=tab.dataset.sc;
+  renderPrediction();drawLine();
+});
+
+/* ============ SRI PAGE ============ */
+function renderSri(){
+  document.getElementById('sriToday').textContent=invoices.filter(i=>i.sri==='ok').length;
+  document.getElementById('sriLat').textContent=(360+Math.floor(Math.random()*90))+' ms';
+  document.querySelectorAll('#page-sri .comp-bar i').forEach(bar=>{const wv=bar.style.width;bar.style.width='0';requestAnimationFrame(()=>requestAnimationFrame(()=>bar.style.width=wv));});
+  document.getElementById('sriLogBody').innerHTML=sriLog.slice(0,8).map(l=>
+    `<tr><td class="mono">${l.time}</td><td><b class="mono">${l.num}</b></td><td>${l.act}</td><td><span class="tag ok">● ${l.resp}</span></td><td class="mono">${l.lat} ms</td></tr>`).join('');
+}
+function pingSri(){
+  toast('Conexión con el SRI verificada · '+(380+Math.floor(Math.random()*60))+' ms');
+  document.getElementById('sriLat').textContent=(360+Math.floor(Math.random()*90))+' ms';
+}
+window.addEventListener('resize',()=>{if(document.getElementById('app').classList.contains('show')){drawBar();drawDonut();if(document.getElementById('page-prediccion').classList.contains('active'))drawLine();}});
+
+/* ============ TOAST ============ */
+let toastT;
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#2B2B2B" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg>'+msg;
+  el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2600);
+}
+
+/* init builder */
+document.getElementById('lineItems').appendChild(lineRow('Diseño UX · Octubre',1,1250));
+</script>
+</body>
+</html>
