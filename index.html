@@ -278,7 +278,15 @@
   #app{display:none;min-height:100vh;background:var(--noir)}
   #app.show{display:grid;grid-template-columns:248px 1fr;animation:fadein .6s}
   @keyframes fadein{from{opacity:0}to{opacity:1}}
-  @media(max-width:840px){#app.show{grid-template-columns:1fr}.side{position:fixed;z-index:50;transform:translateX(-100%);transition:transform .35s}.side.open{transform:none}}
+  .scrim{display:none}
+  @media(max-width:840px){
+    #app.show{display:block}
+    main{height:auto;min-height:100dvh;width:100%}
+    .side{position:fixed;top:0;left:0;height:100dvh;width:84vw;max-width:300px;z-index:60;transform:translateX(-100%);transition:transform .35s;box-shadow:30px 0 80px rgba(0,0,0,.6)}
+    #app.nav-open .side{transform:none}
+    .scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:55;opacity:0;pointer-events:none;transition:opacity .3s}
+    #app.nav-open .scrim{opacity:1;pointer-events:auto}
+  }
 
   .side{background:#202020;border-right:1px solid var(--line);padding:24px 16px;display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
   .side .brand{padding:6px 8px 22px;border-bottom:1px solid var(--line);margin-bottom:16px}
@@ -423,10 +431,7 @@
 
   /* ======= MOBILE ADAPTATION ======= */
   @media(max-width:840px){
-    main{height:auto;min-height:100vh}
     .topbar{position:sticky;top:0;background:var(--noir);z-index:40;padding:10px 0 14px;margin-bottom:18px;border-bottom:1px solid var(--line)}
-    .side{width:84vw;max-width:300px;box-shadow:30px 0 80px rgba(0,0,0,.6)}
-    .side::after{content:"";position:fixed;inset:0;left:84vw;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .3s}
   }
   @media(max-width:620px){
     .kpis,.kpis[style]{grid-template-columns:1fr 1fr!important}
@@ -541,6 +546,7 @@
 
 <!-- ===================== DASHBOARD ===================== -->
 <div id="app">
+  <div class="scrim" onclick="closeSide()"></div>
   <aside class="side" id="side">
     <div class="brand"><span class="dot"></span><b>ElectroFact</b><span>App</span></div>
     <button class="navbtn active" data-page="resumen"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Resumen</button>
@@ -560,7 +566,7 @@
   <main>
     <div class="topbar">
       <div style="display:flex;align-items:center;gap:14px">
-        <button class="menu-toggle" onclick="document.getElementById('side').classList.toggle('open')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+        <button class="menu-toggle" onclick="toggleSide()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
         <div class="h" id="pageTitle">Resumen ejecutivo<small id="pageSub">Estado general de tu operación · Octubre 2026</small></div>
       </div>
       <div class="right">
@@ -991,11 +997,13 @@ let scenario='moderado';
 function enterApp(){
   document.getElementById('landing').style.display='none';
   document.getElementById('features').style.display='none';
-  const app=document.getElementById('app');app.classList.add('show');
+  const app=document.getElementById('app');app.classList.add('show');app.classList.remove('nav-open');
   window.scrollTo(0,0);
   renderAll();
   setTimeout(()=>{animateKpis();drawBar();drawDonut();},120);
 }
+function toggleSide(){document.getElementById('app').classList.toggle('nav-open');}
+function closeSide(){document.getElementById('app').classList.remove('nav-open');}
 function exitApp(){
   document.getElementById('app').classList.remove('show');
   document.getElementById('landing').style.display='flex';
@@ -1008,7 +1016,7 @@ document.querySelectorAll('.navbtn').forEach(b=>b.onclick=()=>{
   const p=b.dataset.page;
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
-  document.getElementById('side').classList.remove('open');
+  document.getElementById('app').classList.remove('nav-open');
   const titles={resumen:['Resumen ejecutivo','Estado general de tu operación · Octubre 2026'],clientes:['Clientes','Cartera de clientes registrados'],facturar:['Facturación electrónica','Emite comprobantes autorizados por el SRI'],pagos:['Control de pagos','Seguimiento de cobros y vencimientos'],prediccion:['Predicción IA','Proyección de flujo de caja a 6 meses'],sri:['Integración SRI','Conexión con el Servicio de Rentas Internas'],reportes:['Reportes & BSC','KPIs y Balanced Scorecard de la operación'],empresa:['La empresa','Quiénes somos, metodología y equipo']};
   document.getElementById('pageTitle').innerHTML=titles[p][0]+'<small>'+titles[p][1]+'</small>';
   if(p==='prediccion')setTimeout(()=>{renderPrediction();drawLine();},60);
